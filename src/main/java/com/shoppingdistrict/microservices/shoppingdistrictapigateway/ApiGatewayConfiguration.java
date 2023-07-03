@@ -1,6 +1,7 @@
 package com.shoppingdistrict.microservices.shoppingdistrictapigateway;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -15,13 +16,23 @@ import java.util.Collections;
 
 @Configuration
 public class ApiGatewayConfiguration{
-
+	
+	@Value("${keycloak.url}")
+	private String keyCloakUrl;
+	
+	@Value("${frontend.url}")
+	private String frontEndUrl;
+	
+	@Value("${gateway.url}")
+	private String gatewayUrl;
 	
 	@Bean
 	public RouteLocator gatewayRouter(RouteLocatorBuilder builder) {
 
 		return builder.routes()
 				.route(p -> p.path("/user-service/customers/**")
+						 .uri("lb://USER-SERVICE"))
+				.route(p -> p.path("/user-service/subscription/**")
 						 .uri("lb://USER-SERVICE"))
 				.route(p -> p.path("/product-listing-service/**")
 						 .uri("lb://PRODUCT-LISTING-SERVICE"))
@@ -50,8 +61,7 @@ public class ApiGatewayConfiguration{
 				// TODO Auto-generated method stub
 				// TODO Auto-generated method stub
 				CorsConfiguration config = new CorsConfiguration();
-				config.setAllowedOrigins(Arrays.asList( "http://keycloak:8080",
-						"http://54.226.69.223", "http://54.226.69.223:80"));
+				config.setAllowedOrigins(Arrays.asList( keyCloakUrl, frontEndUrl, gatewayUrl));
 				//config.setAllowedOrigins(Collections.singletonList("*"));
 				config.setAllowedMethods(Collections.singletonList("*"));
 				config.setAllowCredentials(true);
@@ -62,7 +72,7 @@ public class ApiGatewayConfiguration{
 	}).and()
 		.csrf().disable()
 		.authorizeExchange()
-				.pathMatchers("/user-service/customers/**","/customer-order-fulfillment-service/**", "/product-listing-service/**")
+				.pathMatchers("/user-service/customers/**","/user-service/subscription/**","/customer-order-fulfillment-service/**", "/product-listing-service/**")
 				.permitAll()
 			.and()
 				.authorizeExchange()
